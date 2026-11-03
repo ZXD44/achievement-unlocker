@@ -10,3 +10,4 @@ Pull shark level boost 4 1793747916
 Pull shark level boost 5 1793747926
 Pull shark level boost 6 1793747936
 Pull shark level boost 7 1793747948
+Pull shark level boost 8 1793747958
