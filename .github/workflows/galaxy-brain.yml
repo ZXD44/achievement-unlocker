@@ -1,0 +1,110 @@
+name: Galaxy Brain Discussions Helper
+
+on:
+  workflow_dispatch:
+    inputs:
+      discussion_title:
+        description: 'Title of the discussion question'
+        required: true
+        default: 'Q&A: Architecture Pattern Question'
+      discussion_body:
+        description: 'Question body'
+        required: true
+        default: 'What is the optimal strategy for scalable modular architecture in distributed systems?'
+      answer_body:
+        description: 'Answer body to be posted'
+        required: true
+        default: 'Separation of concerns using event-driven communication and strict domain boundaries provides high cohesion and decoupled scalability.'
+
+permissions:
+  contents: read
+  discussions: write
+
+jobs:
+  galaxy-brain:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate Discussion and Answer
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }}
+          OWNER: ${{ github.repository_owner }}
+          REPO: ${{ github.event.repository.name }}
+          TITLE: ${{ inputs.discussion_title }}
+          BODY: ${{ inputs.discussion_body }}
+          ANSWER: ${{ inputs.answer_body }}
+        run: |
+          echo "Querying repository and discussion categories..."
+          QUERY='query($owner: String!, $repo: String!) {
+            repository(owner: $owner, name: $repo) {
+              id
+              discussionCategories(first: 10) {
+                nodes {
+                  id
+                  name
+                  isAnswerable
+                }
+              }
+            }
+          }'
+          
+          REPO_DATA=$(gh api graphql -f query="$QUERY" -F owner="$OWNER" -F repo="$REPO")
+          REPO_ID=$(echo "$REPO_DATA" | jq -r '.data.repository.id')
+          CATEGORY_ID=$(echo "$REPO_DATA" | jq -r '.data.repository.discussionCategories.nodes[] | select(.isAnswerable == true) | .id' | head -n 1)
+          
+          if [ -z "$CATEGORY_ID" ] || [ "$CATEGORY_ID" = "null" ]; then
+            echo "::warning::No Q&A / Answerable discussion category found. Please ensure Discussions are enabled in repository Settings with Q&A category."
+            exit 1
+          fi
+          
+          echo "Target Category ID: $CATEGORY_ID"
+          echo "Creating Discussion..."
+          
+          CREATE_MUTATION='mutation($repoId: ID!, $categoryId: ID!, $title: String!, $body: String!) {
+            createDiscussion(input: {repositoryId: $repoId, categoryId: $categoryId, title: $title, body: $body}) {
+              discussion {
+                id
+                url
+              }
+            }
+          }'
+          
+          DISC_DATA=$(gh api graphql -f query="$CREATE_MUTATION" \
+            -F repoId="$REPO_ID" \
+            -F categoryId="$CATEGORY_ID" \
+            -F title="$TITLE" \
+            -F body="$BODY")
+            
+          DISC_ID=$(echo "$DISC_DATA" | jq -r '.data.createDiscussion.discussion.id')
+          DISC_URL=$(echo "$DISC_DATA" | jq -r '.data.createDiscussion.discussion.url')
+          echo "Discussion created: $DISC_URL (ID: $DISC_ID)"
+          
+          echo "Adding Answer Comment..."
+          COMMENT_MUTATION='mutation($discussionId: ID!, $body: String!) {
+            addDiscussionComment(input: {discussionId: $discussionId, body: $body}) {
+              comment {
+                id
+              }
+            }
+          }'
+          
+          COMMENT_DATA=$(gh api graphql -f query="$COMMENT_MUTATION" \
+            -F discussionId="$DISC_ID" \
+            -F body="$ANSWER")
+            
+          COMMENT_ID=$(echo "$COMMENT_DATA" | jq -r '.data.addDiscussionComment.comment.id')
+          echo "Comment created with ID: $COMMENT_ID"
+          
+          echo "Marking Comment as Chosen Answer..."
+          ANSWER_MUTATION='mutation($commentId: ID!) {
+            markDiscussionCommentAsAnswer(input: {id: $commentId}) {
+              discussion {
+                id
+                answer {
+                  id
+                }
+              }
+            }
+          }'
+          
+          gh api graphql -f query="$ANSWER_MUTATION" -F commentId="$COMMENT_ID"
+          echo "Successfully marked as answer for Galaxy Brain progress!"
