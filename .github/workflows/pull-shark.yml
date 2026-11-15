@@ -21,16 +21,16 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }}
 
       - name: Configure Git Author
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "ZXD44"
+          git config user.email "gonhackergamer0@gmail.com"
 
       - name: Batch PR Generator & Auto-Merge
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }}
           TOTAL_COUNT: ${{ inputs.prs_to_create }}
         run: |
           echo "Starting batch PR generation for Pull Shark ($TOTAL_COUNT iterations)..."
@@ -61,6 +61,9 @@ jobs:
             
             git checkout main
             git pull origin main
+            
+            # Delay to prevent secondary rate-limiting
+            sleep 2
           done
           
           echo "Batch completed successfully."

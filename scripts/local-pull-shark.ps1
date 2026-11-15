@@ -38,6 +38,9 @@ for ($i = 1; $i -le $Count; $i++) {
     
     git checkout main | Out-Null
     git pull origin main | Out-Null
+
+    # Delay to prevent secondary rate-limiting
+    Start-Sleep -Seconds 2
 }
 
 Write-Host "Done!" -ForegroundColor Green
