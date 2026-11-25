@@ -1,12 +1,12 @@
-name: Pull Shark Multiplier
+name: PR Lifecycle Automation
 
 on:
   workflow_dispatch:
     inputs:
       prs_to_create:
-        description: 'Number of PRs to create and auto-merge (e.g. 16, 32, 64)'
+        description: 'Number of lifecycle PRs to test'
         required: true
-        default: '16'
+        default: '5'
         type: string
 
 permissions:
@@ -14,7 +14,7 @@ permissions:
   pull-requests: write
 
 jobs:
-  pull-shark:
+  pr-lifecycle:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -26,44 +26,31 @@ jobs:
       - name: Configure Git Author
         run: |
           git config user.name "ZXD44"
-          git config user.email "gonhackergamer0@gmail.com"
+          git config user.email "168273485+ZXD44@users.noreply.github.com"
 
-      - name: Batch PR Generator & Auto-Merge
+      - name: Run PR Lifecycle Check
         env:
           GH_TOKEN: ${{ secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }}
           TOTAL_COUNT: ${{ inputs.prs_to_create }}
         run: |
-          echo "Starting batch PR generation for Pull Shark ($TOTAL_COUNT iterations)..."
-          
           for i in $(seq 1 $TOTAL_COUNT); do
             TIMESTAMP=$(date +%s%N)
-            BRANCH_NAME="shark-boost-$TIMESTAMP-$i"
-            
+            BRANCH_NAME="ci/lifecycle-$TIMESTAMP-$i"
+
             git checkout -b "$BRANCH_NAME" main
-            
-            echo "Pull Shark boost checkpoint #$i at $(date -u)" >> PULL_SHARK_LOG.txt
-            git add PULL_SHARK_LOG.txt
-            git commit -m "chore: pull shark progression record $i [skip ci]"
+            echo "CI lifecycle checkpoint #$i at $(date -u)" >> logs/pr-runs.log
+            git add logs/pr-runs.log
+            git commit -m "chore(ci): lifecycle checkpoint $i [skip ci]"
             git push origin "$BRANCH_NAME"
-            
-            # Create Pull Request
+
             PR_URL=$(gh pr create \
               --base main \
               --head "$BRANCH_NAME" \
-              --title "feat(shark): automate progression cycle $i" \
-              --body "Automated PR iteration $i for Pull Shark badge milestone.")
-            
-            echo "Created PR: $PR_URL"
-            
-            # Merge Pull Request immediately
+              --title "chore(ci): lifecycle check $i" \
+              --body "Automated CI/CD pull request lifecycle test #$i.")
+
             gh pr merge "$PR_URL" --merge --delete-branch
-            echo "Merged PR: $PR_URL"
-            
             git checkout main
             git pull origin main
-            
-            # Delay to prevent secondary rate-limiting
             sleep 2
           done
-          
-          echo "Batch completed successfully."

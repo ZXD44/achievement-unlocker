@@ -1,4 +1,4 @@
-name: Galaxy Brain Discussions Helper
+name: Discussion Q&A Automation
 
 on:
   workflow_dispatch:
@@ -21,10 +21,10 @@ permissions:
   discussions: write
 
 jobs:
-  galaxy-brain:
+  discussion-qa:
     runs-on: ubuntu-latest
     steps:
-      - name: Generate Discussion and Answer
+      - name: Create and Resolve Q&A Discussion
         env:
           GH_TOKEN: ${{ secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }}
           OWNER: ${{ github.repository_owner }}
@@ -33,78 +33,46 @@ jobs:
           BODY: ${{ inputs.discussion_body }}
           ANSWER: ${{ inputs.answer_body }}
         run: |
-          echo "Querying repository and discussion categories..."
           QUERY='query($owner: String!, $repo: String!) {
             repository(owner: $owner, name: $repo) {
               id
               discussionCategories(first: 10) {
-                nodes {
-                  id
-                  name
-                  isAnswerable
-                }
+                nodes { id name isAnswerable }
               }
             }
           }'
-          
+
           REPO_DATA=$(gh api graphql -f query="$QUERY" -F owner="$OWNER" -F repo="$REPO")
           REPO_ID=$(echo "$REPO_DATA" | jq -r '.data.repository.id')
           CATEGORY_ID=$(echo "$REPO_DATA" | jq -r '.data.repository.discussionCategories.nodes[] | select(.isAnswerable == true) | .id' | head -n 1)
-          
+
           if [ -z "$CATEGORY_ID" ] || [ "$CATEGORY_ID" = "null" ]; then
-            echo "::warning::No Q&A / Answerable discussion category found. Please ensure Discussions are enabled in repository Settings with Q&A category."
+            echo "::warning::No Q&A discussion category found."
             exit 1
           fi
-          
-          echo "Target Category ID: $CATEGORY_ID"
-          echo "Creating Discussion..."
-          
+
           CREATE_MUTATION='mutation($repoId: ID!, $categoryId: ID!, $title: String!, $body: String!) {
             createDiscussion(input: {repositoryId: $repoId, categoryId: $categoryId, title: $title, body: $body}) {
-              discussion {
-                id
-                url
-              }
+              discussion { id url }
             }
           }'
-          
-          DISC_DATA=$(gh api graphql -f query="$CREATE_MUTATION" \
-            -F repoId="$REPO_ID" \
-            -F categoryId="$CATEGORY_ID" \
-            -F title="$TITLE" \
-            -F body="$BODY")
-            
+
+          DISC_DATA=$(gh api graphql -f query="$CREATE_MUTATION" -F repoId="$REPO_ID" -F categoryId="$CATEGORY_ID" -F title="$TITLE" -F body="$BODY")
           DISC_ID=$(echo "$DISC_DATA" | jq -r '.data.createDiscussion.discussion.id')
-          DISC_URL=$(echo "$DISC_DATA" | jq -r '.data.createDiscussion.discussion.url')
-          echo "Discussion created: $DISC_URL (ID: $DISC_ID)"
-          
-          echo "Adding Answer Comment..."
+
           COMMENT_MUTATION='mutation($discussionId: ID!, $body: String!) {
             addDiscussionComment(input: {discussionId: $discussionId, body: $body}) {
-              comment {
-                id
-              }
+              comment { id }
             }
           }'
-          
-          COMMENT_DATA=$(gh api graphql -f query="$COMMENT_MUTATION" \
-            -F discussionId="$DISC_ID" \
-            -F body="$ANSWER")
-            
+
+          COMMENT_DATA=$(gh api graphql -f query="$COMMENT_MUTATION" -F discussionId="$DISC_ID" -F body="$ANSWER")
           COMMENT_ID=$(echo "$COMMENT_DATA" | jq -r '.data.addDiscussionComment.comment.id')
-          echo "Comment created with ID: $COMMENT_ID"
-          
-          echo "Marking Comment as Chosen Answer..."
+
           ANSWER_MUTATION='mutation($commentId: ID!) {
             markDiscussionCommentAsAnswer(input: {id: $commentId}) {
-              discussion {
-                id
-                answer {
-                  id
-                }
-              }
+              discussion { id answer { id } }
             }
           }'
-          
+
           gh api graphql -f query="$ANSWER_MUTATION" -F commentId="$COMMENT_ID"
-          echo "Successfully marked as answer for Galaxy Brain progress!"
