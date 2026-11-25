@@ -1,60 +1,73 @@
 <div align="center">
 
-# 🏆 GitHub Achievement Unlocker
+# GitOps Workflow Lab
 
-**Automated tools, workflows, and guides to earn and upgrade GitHub profile badges.**
+**Automated GitHub Actions, REST & GraphQL API orchestration for CI/CD pipelines, pull request lifecycle testing, and discussion automation.**
 
-[![GitHub license](https://img.shields.io/github/license/ZXD44/achievement-unlocker?style=flat-square)](LICENSE)
-[![GitHub stars](https://img.shields.io/github/stars/ZXD44/achievement-unlocker?style=flat-square)](https://github.com/ZXD44/achievement-unlocker/stargazers)
-[![Pull Shark Workflow](https://img.shields.io/badge/Workflow-Pull%20Shark-blue?style=flat-square&logo=githubactions)](.github/workflows/pull-shark.yml)
-[![Galaxy Brain Workflow](https://img.shields.io/badge/Workflow-Galaxy%20Brain-purple?style=flat-square&logo=githubactions)](.github/workflows/galaxy-brain.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE)
+[![PowerShell](https://img.shields.io/badge/PowerShell-7%2B-5391FE?style=flat-square&logo=powershell&logoColor=white)](scripts/)
+[![GitHub Actions](https://img.shields.io/badge/GitHub%20Actions-CI%2FCD-2088FF?style=flat-square&logo=githubactions&logoColor=white)](.github/workflows/)
+[![GraphQL](https://img.shields.io/badge/GitHub-GraphQL%20%26%20REST-E10098?style=flat-square&logo=graphql&logoColor=white)](scripts/discussion-qa-bot.ps1)
 
 </div>
 
 ---
 
-## 🎯 Badges Matrix
+## Overview
 
-| Badge | Status | Target / Criteria | Tier Progression |
-| :--- | :---: | :--- | :--- |
-| **Pull Shark** | 🟢 Ready | Opened PR merged into target branch | 🥉 2 PRs · 🥈 16 PRs · 🥇 128 PRs |
-| **Pair Extraordinaire** | 🟢 Complete | Co-authored commits in merged PR | Default |
-| **Quickdraw** | 🟢 Complete | Closed an issue / PR within 5 mins | Default |
-| **YOLO** | 🟢 Complete | Merged PR without code review | Default |
-| **Galaxy Brain** | ⚡ Automated | Accepted answers on GitHub Discussions | 🥉 2 · 🥈 8 · 🥇 16 · 💎 32 Answers |
-| **Public Sponsor** | 🟢 Complete | Sponsor an open source maintainer | Default |
-| **Starstruck** | 🌟 Target | Reach 16+ stars on public repository | 🥉 16 · 🥈 128 · 🥇 512 · 💎 4096 Stars |
+`gitops-workflow-lab` is a lightweight automation sandbox for testing and benchmarking GitHub API workflows:
+
+- **PR Lifecycle Runner (`scripts/pr-lifecycle-runner.ps1`)** — Rate-limit-resilient REST API runner for branch creation, atomic file updates, pull request opening, auto-merge, and branch cleanup with exponential backoff.
+- **Co-Author Sync (`scripts/coauthor-sync.ps1`)** — Verifies `Co-authored-by` git trailers across automated pull requests and validates GraphQL `authors` attribution.
+- **Discussion Q&A Bot (`scripts/discussion-qa-bot.ps1`)** — GraphQL orchestration for creating, answering, and resolving Q&A threads in GitHub Discussions.
+- **GitHub Actions Workflows (`.github/workflows/`)** — Manual `workflow_dispatch` pipelines for CI/CD and repository automation checks.
 
 ---
 
-## 🚀 Quickstart & Workflows
+## Repository Structure
 
-### 1. 🦈 Pull Shark Multiplier
-Run `.github/workflows/pull-shark.yml` directly from GitHub Actions:
-- Go to **Actions** -> **Pull Shark Multiplier** -> **Run workflow**.
-- Set input `prs_to_create` (e.g. `16` or `32`).
-- The runner automatically spins feature branches, commits, opens PRs, and auto-merges them instantly.
-
-### 2. 🧠 Galaxy Brain Discussion Automator
-Run `.github/workflows/galaxy-brain.yml`:
-1. Enable **Discussions** in repo `Settings -> General -> Features -> Discussions`.
-2. Ensure the **Q&A** category exists.
-3. Trigger the workflow under **Actions** tab with custom questions and answers.
-4. The workflow creates the discussion topic, replies, and marks the answer automatically via GraphQL API.
-
-### 3. ⭐ Starstruck
-Help star this repository to achieve the **Starstruck** milestone! If you find this toolkit helpful, drop a star ⭐ at the top right of the page.
+```text
+gitops-workflow-lab/
+├── .github/
+│   └── workflows/
+│       ├── discussion-qa.yml       # GraphQL Q&A discussion workflow
+│       └── pr-lifecycle.yml        # Automated PR lifecycle workflow
+├── logs/
+│   ├── coauthor-sync.md            # Co-authored commit verification log
+│   ├── pr-runs.log                 # Historical PR runner checkpoints
+│   └── runner-tick.txt             # Atomic state tick file for REST runner
+├── scripts/
+│   ├── coauthor-sync.ps1           # Co-author attribution PR runner
+│   ├── discussion-qa-bot.ps1       # GraphQL Discussions Q&A automation
+│   └── pr-lifecycle-runner.ps1     # REST API PR lifecycle runner
+├── .gitignore
+├── LICENSE
+└── README.md
+```
 
 ---
 
-## 🛠 Local CLI Utility
+## Usage
 
-Run local scripts in PowerShell or Bash:
-```bash
-# Example local co-author commit for Pair Extraordinaire
-git commit -m "feat: achievement progression milestone
+### Prerequisites
+- [GitHub CLI (`gh`)](https://cli.github.com/) authenticated (`gh auth status`)
+- PowerShell 7+ (or Windows PowerShell 5.1+)
 
-Co-authored-by: sahaphumx-lab <sahaphumx@gmail.com>"
+### 1. PR Lifecycle Runner
+```powershell
+./scripts/pr-lifecycle-runner.ps1 -Count 10 -DelayMs 1500
+```
+
+### 2. Co-Author Verification Runner
+```powershell
+./scripts/coauthor-sync.ps1 -Count 5
+```
+
+### 3. Discussion Q&A Automation
+```powershell
+$env:ALT_GH_TOKEN = "<secondary-pat>"
+./scripts/discussion-qa-bot.ps1 -Count 4
+Remove-Item Env:ALT_GH_TOKEN
 ```
 
 ---
