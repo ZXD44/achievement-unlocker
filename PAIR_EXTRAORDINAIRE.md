@@ -96,3 +96,4 @@ Unlock Pair Extraordinaire badge
 - Pair Extraordinaire PR milestone #47 (1795579325592)
 
 - Pair Extraordinaire verified noreply test
+- Pair Extraordinaire verified #1 (1795584356413)
