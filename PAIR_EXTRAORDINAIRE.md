@@ -126,3 +126,4 @@ Unlock Pair Extraordinaire badge
 - Pair Extraordinaire verified #28 (1795584600064)
 - Pair Extraordinaire verified #29 (1795584609277)
 - Pair Extraordinaire verified #30 (1795584618444)
+- Pair Extraordinaire verified #31 (1795584627371)
