@@ -97,3 +97,4 @@ Unlock Pair Extraordinaire badge
 
 - Pair Extraordinaire verified noreply test
 - Pair Extraordinaire verified #1 (1795584356413)
+- Pair Extraordinaire verified #2 (1795584366079)
