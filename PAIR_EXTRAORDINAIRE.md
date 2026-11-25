@@ -85,3 +85,4 @@ Unlock Pair Extraordinaire badge
 - Pair Extraordinaire PR milestone #36 (1795579160375)
 - Pair Extraordinaire PR milestone #37 (1795579174832)
 - Pair Extraordinaire PR milestone #38 (1795579190099)
+- Pair Extraordinaire PR milestone #39 (1795579205088)
